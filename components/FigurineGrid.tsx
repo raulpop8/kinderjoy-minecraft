@@ -44,7 +44,7 @@ export default function FigurineGrid() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={[
-              'font-pixel text-[7px] px-4 py-3 whitespace-nowrap border-b-[3px] transition-colors duration-100',
+              'font-pixel text-[9px] px-5 py-3.5 whitespace-nowrap border-b-[3px] transition-colors duration-100',
               activeTab === tab.id
                 ? 'text-mc-green-lit border-mc-green'
                 : 'text-mc-muted border-transparent hover:text-mc-text',
@@ -56,13 +56,13 @@ export default function FigurineGrid() {
       </div>
 
       {/* Section label */}
-      <p className="font-pixel text-[7px] text-mc-muted tracking-widest mb-4 uppercase">
+      <p className="font-pixel text-[9px] text-mc-muted tracking-widest mb-5 uppercase">
         {SECTION_LABEL[activeTab]}
       </p>
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="col-span-full text-center py-20 font-pixel text-[9px] text-mc-muted leading-loose">
+        <div className="col-span-full text-center py-20 font-pixel text-[11px] text-mc-muted leading-loose">
           You caught them all!<br />Complete set — well done.
         </div>
       ) : (

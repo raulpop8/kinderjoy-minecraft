@@ -36,17 +36,15 @@ export default function FigurineCard({ figurine }: Props) {
     >
       {/* Portrait */}
       <div className="relative w-full aspect-square overflow-hidden">
-        {/* Rarity badge */}
         {figurine.rarity !== 'common' && (
           <span className={[
-            'absolute top-2 left-2 z-10 font-pixel text-[6px] px-1.5 py-1 leading-tight',
+            'absolute top-2 left-2 z-10 font-pixel text-[8px] px-1.5 py-1 leading-tight',
             RARITY_STYLE[figurine.rarity],
           ].join(' ')}>
             {RARITY_LABEL[figurine.rarity]}
           </span>
         )}
 
-        {/* Pixel face */}
         <div className={[
           'w-full h-full transition-all duration-200 [image-rendering:pixelated]',
           isCollected ? '' : 'grayscale brightness-50',
@@ -54,10 +52,9 @@ export default function FigurineCard({ figurine }: Props) {
           <PixelFace figurine={figurine} />
         </div>
 
-        {/* Checkmark */}
         {isCollected && (
-          <div className="absolute top-2 right-2 w-6 h-6 bg-mc-green flex items-center justify-center z-10">
-            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+          <div className="absolute top-2 right-2 w-7 h-7 bg-mc-green flex items-center justify-center z-10">
+            <svg width="14" height="10" viewBox="0 0 12 8" fill="none">
               <path d="M1 4L4 7L11 1" stroke="white" strokeWidth="2.5" strokeLinecap="square"/>
             </svg>
           </div>
@@ -65,15 +62,15 @@ export default function FigurineCard({ figurine }: Props) {
       </div>
 
       {/* Info */}
-      <div className="px-2.5 pb-3 pt-2 border-t-2 border-mc-border flex-1 flex flex-col gap-1.5">
-        <p className="font-pixel text-[6px] text-mc-muted">{figurine.id}</p>
-        <p className="font-pixel text-[7.5px] text-mc-text leading-relaxed">{figurine.name}</p>
+      <div className="px-3 pb-3 pt-2.5 border-t-2 border-mc-border flex-1 flex flex-col gap-2">
+        <p className="font-pixel text-[8px] text-mc-muted">{figurine.id}</p>
+        <p className="font-pixel text-[9px] text-mc-text leading-relaxed">{figurine.name}</p>
         <div className="flex items-center justify-between mt-auto pt-1">
-          <span className="font-body text-[11px] font-medium text-mc-muted">
+          <span className="font-body text-[13px] font-medium text-mc-muted">
             {figurine.type === 'figurine' ? 'Figure' : 'Accessory'}
           </span>
           <span className={[
-            'font-pixel text-[6px] transition-opacity duration-150',
+            'font-pixel text-[8px] transition-opacity duration-150',
             isCollected
               ? 'text-mc-muted opacity-60'
               : 'text-mc-green opacity-0 group-hover:opacity-100',
