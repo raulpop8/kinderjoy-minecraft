@@ -7,7 +7,6 @@ import {
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-// ── Types ──────────────────────────────────────────────────────────────────
 interface CollectionContextType {
   collected:    Set<string>
   user:         User | null
@@ -22,7 +21,6 @@ interface CollectionContextType {
 
 const CollectionContext = createContext<CollectionContextType | null>(null)
 
-// ── Local storage helpers ──────────────────────────────────────────────────
 const LS_KEY = 'kj-mc-collection'
 
 function loadLocal(): Set<string> {
@@ -38,57 +36,31 @@ function saveLocal(set: Set<string>) {
   localStorage.setItem(LS_KEY, JSON.stringify(Array.from(set)))
 }
 
-// ── Provider ───────────────────────────────────────────────────────────────
+async function loadFromDB(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('collections')
+    .select('figurine_id')
+    .eq('user_id', userId)
+  if (error) console.error('[DB] load error:', error.message)
+  return data ? new Set(data.map((r: { figurine_id: string }) => r.figurine_id)) : new Set()
+}
+
 export function CollectionProvider({ children }: { children: React.ReactNode }) {
   const [collected,  setCollected]  = useState<Set<string>>(new Set())
   const [user,       setUser]       = useState<User | null>(null)
   const [loading,    setLoading]    = useState(true)
   const [modalOpen,  setModalOpen]  = useState(false)
 
-  // Refs so toggle() always reads the latest values, no stale closures
   const collectedRef = useRef(collected)
   const userRef      = useRef(user)
   collectedRef.current = collected
   userRef.current      = user
 
-  // Load collection from Supabase
-  const loadFromDB = async (userId: string): Promise<Set<string>> => {
-    const { data, error } = await supabase
-      .from('collections')
-      .select('figurine_id')
-      .eq('user_id', userId)
-    if (error) console.error('[DB] loadFromDB error:', error.message)
-    return data ? new Set(data.map((r: { figurine_id: string }) => r.figurine_id)) : new Set()
-  }
-
-  // Init on mount — getSession() is the source of truth, 
-  // onAuthStateChange only handles changes AFTER initial load
   useEffect(() => {
-    let initialised = false
-
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      initialised = true
-      if (session?.user) {
-        setUser(session.user)
-        const dbSet = await loadFromDB(session.user.id)
-        setCollected(dbSet)
-        saveLocal(dbSet)
-      } else {
-        setCollected(loadLocal())
-      }
-      setLoading(false)
-    }
-
-    init()
-
+    // onAuthStateChange fires INITIAL_SESSION immediately on mount —
+    // this is the single source of truth, no separate getSession() needed
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Skip INITIAL_SESSION — init() handles that already
-        if (event === 'INITIAL_SESSION') return
-        // Skip duplicate fires before init completes
-        if (!initialised && event !== 'SIGNED_IN') return
-
         if (session?.user) {
           setUser(session.user)
           const dbSet = await loadFromDB(session.user.id)
@@ -97,18 +69,17 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
         } else {
           setUser(null)
           setCollected(loadLocal())
-          setLoading(false)
         }
+        setLoading(false)
       }
     )
     return () => subscription.unsubscribe()
   }, [])
 
-  // Toggle — plain insert/delete, no upsert confusion
   const toggle = useCallback(async (id: string) => {
     const wasCollected = collectedRef.current.has(id)
 
-    // Update UI immediately
+    // Optimistic UI update
     setCollected(prev => {
       const next = new Set(prev)
       wasCollected ? next.delete(id) : next.add(id)
@@ -117,7 +88,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     })
 
     const currentUser = userRef.current
-    if (!currentUser) return  // guest — localStorage only, done
+    if (!currentUser) return
 
     if (wasCollected) {
       const { error } = await supabase
@@ -159,7 +130,6 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   )
 }
 
-// ── Hook ───────────────────────────────────────────────────────────────────
 export function useCollection() {
   const ctx = useContext(CollectionContext)
   if (!ctx) throw new Error('useCollection must be used within CollectionProvider')
