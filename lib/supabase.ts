@@ -1,19 +1,7 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-let _client: SupabaseClient | null = null
+// Use placeholder values at build time — actual values come from .env.local at runtime
+const url  = process.env.NEXT_PUBLIC_SUPABASE_URL      ?? 'http://localhost:54321'
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder'
 
-export function getSupabase(): SupabaseClient {
-  if (!_client) {
-    const url  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? ''
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
-    _client = createClient(url, anon)
-  }
-  return _client
-}
-
-// Convenience export — same instance, lazy
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_, prop) {
-    return getSupabase()[prop as keyof SupabaseClient]
-  },
-})
+export const supabase = createClient(url, anon)

@@ -45,16 +45,19 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   const [loading,    setLoading]    = useState(true)
   const [modalOpen,  setModalOpen]  = useState(false)
 
-  // Keep a ref so toggle() always sees the latest set without re-creating
+  // Refs so toggle() always reads the latest values without stale closures
   const collectedRef = useRef(collected)
+  const userRef      = useRef(user)
   collectedRef.current = collected
+  userRef.current      = user
 
   // Load collection from Supabase
   const loadFromDB = async (userId: string): Promise<Set<string>> => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('collections')
       .select('figurine_id')
       .eq('user_id', userId)
+    if (error) console.error('loadFromDB error:', error)
     return data ? new Set(data.map((r: { figurine_id: string }) => r.figurine_id)) : new Set()
   }
 
@@ -90,7 +93,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     return () => subscription.unsubscribe()
   }, [])
 
-  // Toggle a figurine collected state
+  // Toggle — uses refs so it never has a stale closure
   const toggle = useCallback(async (id: string) => {
     const wasCollected = collectedRef.current.has(id)
 
@@ -101,22 +104,23 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
       return next
     })
 
-    // Sync to DB if logged in
-    const currentUser = user  // captured at call time
+    const currentUser = userRef.current
     if (currentUser) {
       if (wasCollected) {
-        await supabase
+        const { error } = await supabase
           .from('collections')
           .delete()
           .eq('user_id', currentUser.id)
           .eq('figurine_id', id)
+        if (error) console.error('delete error:', error)
       } else {
-        await supabase
+        const { error } = await supabase
           .from('collections')
           .upsert({ user_id: currentUser.id, figurine_id: id })
+        if (error) console.error('upsert error:', error)
       }
     }
-  }, [user])
+  }, []) // no deps needed — reads latest values via refs
 
   const login = async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
