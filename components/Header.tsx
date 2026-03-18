@@ -2,6 +2,7 @@
 
 import { useCollection } from '@/context/CollectionContext'
 import { TOTAL } from '@/lib/data'
+import ShareButton from './ShareButton'
 
 function CreeperLogo() {
   return (
@@ -67,8 +68,10 @@ export default function Header() {
               <span className="text-mc-green-lit">{count}</span>
               {' '}/ {TOTAL}
             </span>
+
             {user ? (
               <div className="flex items-center gap-2">
+                <ShareButton userId={user.id} />
                 <span className="font-pixel text-[9px] text-mc-muted hidden sm:block truncate max-w-[160px]">
                   {user.email}
                 </span>
