@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title:       'MiniFig Tracker — Kinder Joy × Minecraft 2026',
   description: 'Track your complete Kinder Joy Minecraft 2026 figurine collection.',
   icons: {
-    icon: '/favicon.svg',
+    icon: './favicon.svg',
   },
 }
 
