@@ -57,20 +57,34 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   userRef.current      = user
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION immediately on mount —
-    // this is the single source of truth, no separate getSession() needed
+    // Step 1: getSession() is the authoritative initial load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        const dbSet = await loadFromDB(session.user.id)
+        setCollected(dbSet)
+        saveLocal(dbSet)
+      } else {
+        setCollected(loadLocal())
+      }
+      setLoading(false)
+    })
+
+    // Step 2: onAuthStateChange only handles SIGNED_IN and SIGNED_OUT
+    // (skip INITIAL_SESSION to avoid racing with getSession above)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
+        if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user)
           const dbSet = await loadFromDB(session.user.id)
           setCollected(dbSet)
           saveLocal(dbSet)
-        } else {
+          setLoading(false)
+        } else if (event === 'SIGNED_OUT') {
           setUser(null)
           setCollected(loadLocal())
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
     return () => subscription.unsubscribe()
@@ -79,7 +93,6 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
   const toggle = useCallback(async (id: string) => {
     const wasCollected = collectedRef.current.has(id)
 
-    // Optimistic UI update
     setCollected(prev => {
       const next = new Set(prev)
       wasCollected ? next.delete(id) : next.add(id)
